@@ -7,54 +7,52 @@ if ((int) $_GET['id'] === 0) {
     header('Location: index.php');
 }
 
-$connection = mysqli_connect('127.0.0.1', 'root', '', 'llc_php');
+include_once 'connection.php';
 
-if ($connection === false) {
-    $errors[] = mysqli_connect_error();
-} else {
-    if (isset($_POST['update'])) {
-        $username = trim($_POST['username']);
-        $email = trim($_POST['email']);
-        $profile_photo = $_FILES['file'];
+if (isset($_POST['update'])) {
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $profile_photo = $_FILES['file'];
 
-        if (empty($username)) {
-            $errors[] = 'Username cannot be empty';
-        }
-
-        if (empty($email)) {
-            $errors[] = 'Email cannot be empty';
-        }
-
-        if (empty($errors)) {
-            // if user selects a new file
-            if (! empty($profile_photo['name'])) {
-                $file_info = explode('.', $profile_photo['name']);
-                $file_ext = end($file_info);
-
-                if (! in_array($file_ext, ['jpg', 'png'], true)) {
-                    $errors[] = 'File must be a valid image file';
-                }
-
-                if (empty($errors)) {
-                    $new_file_name = uniqid('pp_', true).'.'.$file_ext;
-                    $upload = move_uploaded_file($profile_photo['tmp_name'], 'profile_photo/'.$new_file_name);
-
-                    $query = "UPDATE users SET profile_photo = '$new_file_name' WHERE id = '$id'";
-                    $result = mysqli_query($connection, $query);
-                }
-            }
-
-            $query = "UPDATE users SET username = '$username', email = '$email' WHERE id = '$id'";
-            $result = mysqli_query($connection, $query);
-
-            $success = 'User updated successfully';
-        }
+    if (empty($username)) {
+        $errors[] = 'Username cannot be empty';
     }
 
-    $query = "SELECT email, username, profile_photo FROM users WHERE id = '$id'";
-    $result = mysqli_query($connection, $query);
-    $data = mysqli_fetch_assoc($result);
+    if (empty($email)) {
+        $errors[] = 'Email cannot be empty';
+    }
+
+    if (empty($errors)) {
+        // if user selects a new file
+        if (! empty($profile_photo['name'])) {
+            $file_info = explode('.', $profile_photo['name']);
+            $file_ext = end($file_info);
+
+            if (! in_array($file_ext, ['jpg', 'png'], true)) {
+                $errors[] = 'File must be a valid image file';
+            }
+
+            if (empty($errors)) {
+                $new_file_name = uniqid('pp_', true).'.'.$file_ext;
+                $upload = move_uploaded_file($profile_photo['tmp_name'], 'profile_photo/'.$new_file_name);
+
+                $query = "UPDATE users SET profile_photo = '$new_file_name' WHERE id = '$id'";
+                $result = mysqli_query($connection, $query);
+            }
+        }
+
+        $query = "UPDATE users SET username = '$username', email = '$email' WHERE id = '$id'";
+        $result = mysqli_query($connection, $query);
+
+        $success = 'User updated successfully';
+    }
 }
+
+$query = 'SELECT email, username, profile_photo FROM users WHERE id = :id';
+$stmt = $connection->prepare($query);
+$stmt->bindParam(':id', $id, PDO::PARAM_INT);
+$stmt->execute();
+$data = $stmt->fetch();
 ?>
 <!doctype html>
 <html lang="en">

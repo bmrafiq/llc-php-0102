@@ -1,13 +1,10 @@
 <?php
-$connection = mysqli_connect('127.0.0.1', 'root', '', 'llc_php');
+include_once 'connection.php';
 
-if ($connection === false) {
-    $errors[] = mysqli_connect_error();
-} else {
-    $query = 'SELECT id, email, username, profile_photo FROM users';
-    $result = mysqli_query($connection, $query);
-    $data = mysqli_fetch_all($result, 1);
-}
+$query = 'SELECT id, email, username, profile_photo FROM users';
+$stmt = $connection->prepare($query);
+$stmt->execute();
+$data = $stmt->fetchAll();
 ?>
 <!doctype html>
 <html lang="en">

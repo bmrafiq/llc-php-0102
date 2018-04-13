@@ -42,19 +42,19 @@ if (isset($_POST['register'])) {
         $upload = move_uploaded_file($profile_photo['tmp_name'], 'profile_photo/'.$new_file_name);
 
         if ($upload) {
-            $connection = mysqli_connect('127.0.0.1', 'root', '', 'llc_php');
+            include_once 'connection.php';
 
-            if ($connection === false) {
-                $errors[] = mysqli_connect_error();
+            $query = 'INSERT INTO `users` (`username`, `email`, `password`, `profile_photo`) VALUES (:username, :email, :password, :profile_photo)';
+            $stmt = $connection->prepare($query);
+            $stmt->bindParam(':username', $username);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':password', $password);
+            $stmt->bindParam(':profile_photo', $new_file_name);
+
+            if ($stmt->execute() === false) {
+                $errors[] = 'User was not inserted.';
             } else {
-                $query = "INSERT INTO `users` (`username`, `email`, `password`, `profile_photo`) VALUES ('$username', '$email', '$password', '$new_file_name')";
-                $insert = mysqli_query($connection, $query);
-
-                if ($insert === true) {
-                    $success = 'User inserted successfully.';
-                } else {
-                    $errors[] = mysqli_error($connection);
-                }
+                $success = 'User inserted successfully.';
             }
         } else {
             $errors[] = 'File was not uploaded. Please try again.';
