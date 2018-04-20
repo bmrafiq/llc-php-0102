@@ -3,7 +3,7 @@
 // database connection
 $dsn = 'mysql:dbname=llc_php;host=127.0.0.1';
 $username = 'root';
-$password = 'a';
+$password = '';
 
 try {
     $connection = new PDO($dsn, $username, $password);

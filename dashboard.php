@@ -1,10 +1,8 @@
 <?php
-$errors = [];
+session_start();
 
-$id = $_GET['id'] ?? 0;
-
-if ((int) $_GET['id'] === 0) {
-    header('Location: index.php');
+if (! isset($_SESSION['id'], $_SESSION['username'])) {
+    header('Location: login.php');
 }
 
 include_once 'connection.php';
@@ -39,7 +37,7 @@ if (isset($_POST['update'])) {
                 $query = 'UPDATE users SET profile_photo = :profile_photo WHERE id = :id';
                 $stmt = $connection->prepare($query);
                 $stmt->bindParam(':profile_photo', $new_file_name);
-                $stmt->bindParam(':id', $id);
+                $stmt->bindParam(':id', $_SESSION['id'], PDO::PARAM_INT);
                 $stmt->execute();
             }
         }
@@ -48,17 +46,19 @@ if (isset($_POST['update'])) {
         $stmt = $connection->prepare($query);
         $stmt->bindParam(':username', $username);
         $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':id', $_SESSION['id'], PDO::PARAM_INT);
         $stmt->execute();
+        $_SESSION['username'] = $username;
 
         $success = 'User updated successfully';
     }
 }
 
-$query = 'SELECT email, username, profile_photo FROM users WHERE id = :id';
+$query = 'SELECT * FROM users WHERE id = :id';
 $stmt = $connection->prepare($query);
-$stmt->bindParam(':id', $id, PDO::PARAM_INT);
+$stmt->bindParam(':id', $_SESSION['id'], PDO::PARAM_INT);
 $stmt->execute();
+
 $data = $stmt->fetch();
 ?>
 <!doctype html>
@@ -74,41 +74,47 @@ $data = $stmt->fetch();
 </head>
 
 <body class="text-center">
-<?php
-if (isset($success)) {
-    ?>
-    <div class="alert alert-success"><?php echo $success; ?></div>
+<div class="well">
+    <h2>You are logged in as, <?php echo $_SESSION['username']; ?></h2>
+</div>
+
+<div class="well">
     <?php
-}
-?>
-<?php
-if (! empty($errors)) {
-    ?>
-    <div class="alert alert-warning">
-        <?php
-        foreach ($errors as $error) {
-            ?>
-            <ul>
-                <li><?php echo $error; ?></li>
-            </ul>
-            <?php
-        }
+    if (isset($success)) {
         ?>
-    </div>
+        <div class="alert alert-success"><?php echo $success; ?></div>
+        <?php
+    }
+    ?>
     <?php
-}
-?>
-<form action="" method="post" enctype="multipart/form-data">
-    <h1 class="h3 mb-3 font-weight-normal">Edit Profile</h1>
-    <label for="inputUsername">Username (*)</label>
-    <input type="text" name="username" class="form-control" value="<?php echo $data['username']; ?>" required>
-    <label for="inputEmail">Email address (*)</label>
-    <input type="text" name="email" class="form-control" value="<?php echo $data['email']; ?>" required>
-    <label for="inputFile">Profile Photo</label>
-    <input type="file" name="file" class="form-control">
-    <p class="img"><img src="profile_photo/<?php echo $data['profile_photo']; ?>" width="50"></p>
-    <button class="btn btn-lg btn-primary btn-block" type="submit" name="update">Update</button>
-    <p class="mt-5 mb-3 text-muted">&copy; 2018</p>
-</form>
+    if (! empty($errors)) {
+        ?>
+        <div class="alert alert-warning">
+            <?php
+            foreach ($errors as $error) {
+                ?>
+                <ul>
+                    <li><?php echo $error; ?></li>
+                </ul>
+                <?php
+            }
+            ?>
+        </div>
+        <?php
+    }
+    ?>
+    <form action="" method="post" enctype="multipart/form-data">
+        <h1 class="h3 mb-3 font-weight-normal">Edit Profile</h1>
+        <label for="inputUsername">Username (*)</label>
+        <input type="text" name="username" class="form-control" value="<?php echo $data['username']; ?>" required>
+        <label for="inputEmail">Email address (*)</label>
+        <input type="text" name="email" class="form-control" value="<?php echo $data['email']; ?>" required>
+        <label for="inputFile">Profile Photo</label>
+        <input type="file" name="file" class="form-control">
+        <p class="img"><img src="profile_photo/<?php echo $data['profile_photo']; ?>" width="50"></p>
+        <button class="btn btn-lg btn-primary btn-block" type="submit" name="update">Update</button>
+    </form>
+</div>
+<a href="logout.php" class="btn btn-block btn-danger">Logout</a>
 </body>
 </html>

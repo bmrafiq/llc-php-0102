@@ -1,4 +1,5 @@
 <?php
+session_start();
 $errors = [];
 
 if (isset($_POST['login'])) {
@@ -14,24 +15,26 @@ if (isset($_POST['login'])) {
     }
 
     if (empty($errors)) {
-        $connection = mysqli_connect('127.0.0.1', 'root', '', 'llc_php');
+        include_once 'connection.php';
 
-        if ($connection === false) {
-            $errors[] = mysqli_connect_error();
+        $query = 'SELECT id, username, password FROM users WHERE username=:identifier OR email=:identifier';
+        $stmt = $connection->prepare($query);
+        $stmt->bindParam(':identifier', $identifier);
+        $stmt->execute();
+
+        if ($stmt->rowCount()  === 0) {
+            $errors[] = 'User not found';
         } else {
-            $query = "SELECT id, password FROM users WHERE username='$identifier' OR email='$identifier'";
-            $result = mysqli_query($connection, $query);
+            $data = $stmt->fetch();
 
-            if (mysqli_num_rows($result) === 0) {
-                $errors[] = 'User not found';
+            if (password_verify($password, $data['password']) === true) {
+                $_SESSION['id'] = $data['id'];
+                $_SESSION['username'] = $data['username'];
+                $_SESSION['message'] = 'Logged in successfully!';
+
+                header('Location: dashboard.php');
             } else {
-                $data = mysqli_fetch_assoc($result);
-                
-                if (password_verify($password, $data['password']) === true) {
-                    $success = 'You have logged in';
-                } else {
-                    $errors[] = 'Wrong password';
-                }
+                $errors[] = 'Wrong password';
             }
         }
     }
